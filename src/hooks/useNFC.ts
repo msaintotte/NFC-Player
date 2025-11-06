@@ -20,6 +20,9 @@ export const useNFC = () => {
 
   useEffect(() => {
     const initNFC = async () => {
+      console.log('🔧 [NFC Init] Platform:', Capacitor.getPlatform());
+      console.log('🔧 [NFC Init] isNativePlatform:', Capacitor.isNativePlatform());
+      
       if (!Capacitor.isNativePlatform()) {
         setIsSupported(false);
         console.log('NFC only supported on native platforms');
@@ -28,6 +31,7 @@ export const useNFC = () => {
 
       try {
         const { supported } = await NFC.isSupported();
+        console.log('🔧 [NFC Init] isSupported result:', supported);
         setIsSupported(supported);
         
         if (!supported) {
@@ -86,8 +90,17 @@ export const useNFC = () => {
 
         NFC.onError((error: NFCError) => {
           console.error('NFC Error:', error);
-          const errorMsg = `Error NFC: ${JSON.stringify(error)}`;
-          setErrorMessage(errorMsg);
+          const errorMsg = JSON.stringify(error);
+          
+          // En Android, el error "does not require startScan" es informativo, no crítico
+          if (Capacitor.getPlatform() === 'android' && 
+              (errorMsg.includes('does not require') || errorMsg.includes('startScan'))) {
+            console.log('ℹ️ Android: escaneo automático activo');
+            toast.info('Android: escaneo automático activo');
+            return;
+          }
+          
+          setErrorMessage(`Error NFC: ${errorMsg}`);
           toast.error('Error al leer tag NFC');
         });
         
@@ -100,6 +113,18 @@ export const useNFC = () => {
       } catch (error: any) {
         console.error('Error initializing NFC:', error);
         const errorMsg = error.message || error.toString();
+        
+        // En Android, el error "does not require startScan" significa que el escaneo ya está activo
+        if (Capacitor.getPlatform() === 'android' && 
+            (errorMsg.includes('does not require') || errorMsg.includes('startScan'))) {
+          console.log('ℹ️ Android: escaneo automático detectado');
+          setIsScanning(true);
+          setPermissionStatus('granted');
+          setErrorMessage('');
+          toast.info('Android: escaneo automático activo');
+          return;
+        }
+        
         setErrorMessage(errorMsg);
         
         // Don't mark as "denied" if it's just plugin not implemented or device not supported

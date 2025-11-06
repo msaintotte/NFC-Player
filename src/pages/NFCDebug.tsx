@@ -86,9 +86,20 @@ export default function NFCDebug() {
         toast.success('Scanning started - tap an NFC tag');
       }
     } catch (error: any) {
-      addLog(`❌ startScan() error: ${error.message || error}`);
-      setLastError(error.message || 'Unknown error');
-      toast.error('Failed to start scan: ' + (error.message || 'Unknown error'));
+      const errorMsg = error.message || error.toString();
+      
+      // En Android, el error "does not require startScan" es esperado
+      if (Capacitor.getPlatform() === 'android' && 
+          (errorMsg.includes('does not require') || errorMsg.includes('startScan'))) {
+        addLog('ℹ️ Android: escaneo automático activo (no requiere startScan)');
+        setIsScanning(true);
+        toast.info('Android: escaneo automático activo');
+        return;
+      }
+      
+      addLog(`❌ startScan() error: ${errorMsg}`);
+      setLastError(errorMsg);
+      toast.error('Failed to start scan: ' + errorMsg);
     }
   };
 
