@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 interface NFCBannerProps {
   isSupported: boolean;
   isScanning: boolean;
+  permissionStatus?: 'unknown' | 'granted' | 'denied';
 }
 
-export const NFCBanner = ({ isSupported, isScanning }: NFCBannerProps) => {
+export const NFCBanner = ({ isSupported, isScanning, permissionStatus }: NFCBannerProps) => {
   return (
     <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-8 text-center">
       <div className={cn(
@@ -17,12 +18,20 @@ export const NFCBanner = ({ isSupported, isScanning }: NFCBannerProps) => {
       </div>
       
       <h2 className="text-2xl font-bold text-foreground mb-2">
-        {isScanning ? 'Scanning...' : 'Ready to Scan'}
+        {isScanning ? 'Waiting for NFC Tag...' : 'NFC Ready'}
       </h2>
       
       <p className="text-muted-foreground mb-4">
-        Tap an NFC tag to play your music
+        {isScanning 
+          ? 'Tap an NFC tag to play your magic music' 
+          : 'NFC scanning is ready'}
       </p>
+      
+      {permissionStatus === 'denied' && (
+        <p className="text-destructive text-sm mb-4">
+          ⚠️ NFC permissions required. Enable in settings.
+        </p>
+      )}
       
       <div className="flex items-center justify-center gap-2 text-sm">
         <Smartphone className="w-4 h-4" />

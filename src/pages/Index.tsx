@@ -6,14 +6,18 @@ import { BottomNav } from '@/components/BottomNav';
 import { useNFC } from '@/hooks/useNFC';
 
 const Index = () => {
-  const { isSupported, isScanning, scans, currentAudio, playAudio } = useNFC();
+  const { isSupported, isScanning, scans, currentAudio, permissionStatus, playAudio } = useNFC();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-6">
-        <NFCBanner isSupported={isSupported} isScanning={isScanning} />
+        <NFCBanner 
+          isSupported={isSupported} 
+          isScanning={isScanning}
+          permissionStatus={permissionStatus}
+        />
         
         <CurrentPlayer audio={currentAudio} />
         
