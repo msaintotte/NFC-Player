@@ -1,12 +1,26 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Header } from '@/components/Header';
+import { NFCBanner } from '@/components/NFCBanner';
+import { CurrentPlayer } from '@/components/CurrentPlayer';
+import { RecentMagic } from '@/components/RecentMagic';
+import { BottomNav } from '@/components/BottomNav';
+import { useNFC } from '@/hooks/useNFC';
 
 const Index = () => {
+  const { isSupported, isScanning, scans, currentAudio, playAudio } = useNFC();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      
+      <main className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-6">
+        <NFCBanner isSupported={isSupported} isScanning={isScanning} />
+        
+        <CurrentPlayer audio={currentAudio} />
+        
+        <RecentMagic scans={scans} onPlay={playAudio} />
+      </main>
+
+      <BottomNav />
     </div>
   );
 };
