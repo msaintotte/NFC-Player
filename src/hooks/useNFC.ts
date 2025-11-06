@@ -73,10 +73,8 @@ export const useNFC = () => {
                   };
                   
                   saveScan(tempConfig);
-                  openUrl(content);
-                  
-                  const shortUrl = content.length > 40 ? content.substring(0, 40) + '...' : content;
-                  toast.success(`🔗 Abriendo: ${shortUrl}`);
+                  playAudio(tempConfig);
+                  toast.success(`🎵 ${tempConfig.title}`);
                 } else {
                   toast.warning('Tag no reconocido: ' + content);
                 }
@@ -213,41 +211,27 @@ export const useNFC = () => {
   }, []);
 
   const openUrl = useCallback((url: string) => {
-    window.open(url, '_blank');
+    // No abrir en navegador - dejar que el CurrentPlayer maneje la reproducción
+    console.log('URL detected but not opening in browser:', url);
+  }, []);
+
+  const playAudio = useCallback((audioConfig: AudioConfig) => {
+    setCurrentAudio(audioConfig);
+    // No abrir URLs automáticamente - el CurrentPlayer tiene el botón para abrir si el usuario quiere
   }, []);
 
   const simulateScan = useCallback((audioId: string) => {
     const config = getAudioConfig(audioId);
     if (config) {
       saveScan(config);
-      
-      // Open appropriate URL if available
-      if (config.type === 'spotify' && config.spotifyUrl) {
-        openUrl(config.spotifyUrl);
-      } else if (config.type === 'youtube' && config.youtubeUrl) {
-        openUrl(config.youtubeUrl);
-      } else if (config.type === 'newsletter' && config.newsletterUrl) {
-        openUrl(config.newsletterUrl);
-      }
+      playAudio(config);
     }
-  }, [saveScan, openUrl]);
+  }, [saveScan, playAudio]);
 
   const clearHistory = useCallback(() => {
     setScans([]);
     localStorage.removeItem('pudis-scans');
   }, []);
-
-  const playAudio = useCallback((audioConfig: AudioConfig) => {
-    setCurrentAudio(audioConfig);
-    
-    if (audioConfig.type === 'spotify' && audioConfig.spotifyUrl) {
-      openUrl(audioConfig.spotifyUrl);
-    } else if (audioConfig.type === 'youtube' && audioConfig.youtubeUrl) {
-      openUrl(audioConfig.youtubeUrl);
-    } else if (audioConfig.type === 'newsletter' && audioConfig.newsletterUrl) {
-      openUrl(audioConfig.newsletterUrl);
-    }
-  }, [openUrl]);
 
   return {
     isSupported,

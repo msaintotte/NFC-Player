@@ -31,14 +31,27 @@ export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
     seek(duration * percentage);
   };
 
-  const openExternalLink = () => {
-    if (audio?.type === 'spotify' && audio.spotifyUrl) {
-      window.open(audio.spotifyUrl, '_blank');
-    } else if (audio?.type === 'youtube' && audio.youtubeUrl) {
+  const getEmbedUrl = () => {
+    if (audio?.type === 'youtube' && audio.youtubeUrl) {
+      // Extraer video ID de diferentes formatos de URL de YouTube
+      const videoId = audio.youtubeUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      }
+      // Si no podemos extraer el ID, abrir en navegador
       window.open(audio.youtubeUrl, '_blank');
-    } else if (audio?.type === 'newsletter' && audio.newsletterUrl) {
-      window.open(audio.newsletterUrl, '_blank');
+      return null;
+    } else if (audio?.type === 'spotify' && audio.spotifyUrl) {
+      // Convertir URL de Spotify a embed
+      const spotifyMatch = audio.spotifyUrl.match(/spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+      if (spotifyMatch) {
+        return `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
+      }
+      // Si no podemos convertir, abrir en navegador
+      window.open(audio.spotifyUrl, '_blank');
+      return null;
     }
+    return null;
   };
 
   if (!audio) {
@@ -133,14 +146,23 @@ export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-center pt-2">
-            <Button
-              onClick={openExternalLink}
-              className="bg-primary hover:bg-primary/90 gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Abrir en {audio.type === 'spotify' ? 'Spotify' : audio.type === 'youtube' ? 'YouTube' : 'externa'}
-            </Button>
+          <div className="w-full">
+            {(() => {
+              const embedUrl = getEmbedUrl();
+              if (embedUrl) {
+                return (
+                  <div className="w-full aspect-video rounded-lg overflow-hidden">
+                    <iframe
+                      src={embedUrl}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
       </div>
