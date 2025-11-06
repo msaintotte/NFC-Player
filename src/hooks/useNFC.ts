@@ -64,12 +64,15 @@ export const useNFC = () => {
                   // Crear config temporal para guardar en historial
                   const tempConfig: AudioConfig = {
                     id: `url_${Date.now()}`,
-                    title: isYouTube ? 'YouTube Link' : 'Spotify Link',
-                    artist: 'Direct URL',
+                    title: isYouTube ? 'YouTube Video' : 'Spotify Track',
+                    artist: 'Escaneado desde NFC',
                     description: content,
                     type: isYouTube ? 'youtube' : 'spotify',
                     youtubeUrl: isYouTube ? content : undefined,
                     spotifyUrl: isSpotify ? content : undefined,
+                    albumArt: isYouTube 
+                      ? 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200' 
+                      : 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=200',
                   };
                   
                   saveScan(tempConfig);
@@ -154,8 +157,57 @@ export const useNFC = () => {
       if (!firstRecord?.payload) return null;
 
       let content = firstRecord.payload;
-      // Limpiar prefijos comunes de NDEF pero preservar URLs completas
-      content = content.replace(/^\x02en/, '').replace(/^\x03/, '').trim();
+      
+      // Manejar prefijos NDEF RTD_URI
+      if (content.charCodeAt(0) <= 0x23) {
+        const prefixCode = content.charCodeAt(0);
+        const prefixMap: { [key: number]: string } = {
+          0x00: '',
+          0x01: 'http://www.',
+          0x02: 'https://www.',
+          0x03: 'http://',
+          0x04: 'https://',
+          0x05: 'tel:',
+          0x06: 'mailto:',
+          0x07: 'ftp://anonymous:anonymous@',
+          0x08: 'ftp://ftp.',
+          0x09: 'ftps://',
+          0x0A: 'sftp://',
+          0x0B: 'smb://',
+          0x0C: 'nfs://',
+          0x0D: 'ftp://',
+          0x0E: 'dav://',
+          0x0F: 'news:',
+          0x10: 'telnet://',
+          0x11: 'imap:',
+          0x12: 'rtsp://',
+          0x13: 'urn:',
+          0x14: 'pop:',
+          0x15: 'sip:',
+          0x16: 'sips:',
+          0x17: 'tftp:',
+          0x18: 'btspp://',
+          0x19: 'btl2cap://',
+          0x1A: 'btgoep://',
+          0x1B: 'tcpobex://',
+          0x1C: 'irdaobex://',
+          0x1D: 'file://',
+          0x1E: 'urn:epc:id:',
+          0x1F: 'urn:epc:tag:',
+          0x20: 'urn:epc:pat:',
+          0x21: 'urn:epc:raw:',
+          0x22: 'urn:epc:',
+          0x23: 'urn:nfc:',
+        };
+        
+        const prefix = prefixMap[prefixCode];
+        if (prefix !== undefined) {
+          content = prefix + content.slice(1);
+        }
+      }
+      
+      // Limpiar prefijos de idioma comunes (ej: "\x02en")
+      content = content.replace(/^\x02en/, '').trim();
 
       return content;
     } catch (error) {

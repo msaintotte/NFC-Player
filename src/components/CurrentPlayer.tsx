@@ -31,27 +31,56 @@ export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
     seek(duration * percentage);
   };
 
-  const getEmbedUrl = () => {
+  const extractYouTubeId = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.replace('www.', '').replace('m.', '');
+      
+      // youtu.be format
+      if (hostname === 'youtu.be') {
+        return urlObj.pathname.slice(1).split('?')[0];
+      }
+      
+      // youtube.com formats
+      if (hostname === 'youtube.com') {
+        // watch?v=ID
+        const vParam = urlObj.searchParams.get('v');
+        if (vParam) return vParam;
+        
+        // /embed/ID, /shorts/ID, /live/ID
+        const pathMatch = urlObj.pathname.match(/\/(embed|shorts|live|v|e)\/([^/?]+)/);
+        if (pathMatch) return pathMatch[2];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error extracting YouTube ID:', error);
+      return null;
+    }
+  };
+
+  const getEmbedUrl = (): string | null => {
     if (audio?.type === 'youtube' && audio.youtubeUrl) {
-      // Extraer video ID de diferentes formatos de URL de YouTube
-      const videoId = audio.youtubeUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+      const videoId = extractYouTubeId(audio.youtubeUrl);
       if (videoId) {
         return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
       }
-      // Si no podemos extraer el ID, abrir en navegador
-      window.open(audio.youtubeUrl, '_blank');
       return null;
     } else if (audio?.type === 'spotify' && audio.spotifyUrl) {
-      // Convertir URL de Spotify a embed
-      const spotifyMatch = audio.spotifyUrl.match(/spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+      const spotifyMatch = audio.spotifyUrl.match(/spotify\.com\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
       if (spotifyMatch) {
         return `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
       }
-      // Si no podemos convertir, abrir en navegador
-      window.open(audio.spotifyUrl, '_blank');
       return null;
     }
     return null;
+  };
+
+  const handleOpenInBrowser = () => {
+    const url = audio?.type === 'youtube' ? audio.youtubeUrl : audio?.spotifyUrl;
+    if (url) {
+      window.open(url, '_blank');
+    }
   };
 
   if (!audio) {
@@ -161,7 +190,21 @@ export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
                   </div>
                 );
               }
-              return null;
+              return (
+                <div className="w-full p-6 bg-muted rounded-lg text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    No se pudo embeber este enlace
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenInBrowser}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Abrir en navegador
+                  </Button>
+                </div>
+              );
             })()}
           </div>
         )}
