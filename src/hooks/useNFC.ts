@@ -16,6 +16,7 @@ export const useNFC = () => {
   const [scans, setScans] = useState<NFCScan[]>([]);
   const [currentAudio, setCurrentAudio] = useState<AudioConfig | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<'unknown' | 'granted' | 'denied'>('unknown');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const initNFC = async () => {
@@ -30,8 +31,9 @@ export const useNFC = () => {
         setIsSupported(supported);
         
         if (!supported) {
-          setPermissionStatus('denied');
-          toast.error('NFC no está disponible en este dispositivo');
+          setPermissionStatus('unknown');
+          setErrorMessage('NFC no está disponible en este dispositivo');
+          console.log('NFC isSupported returned false');
           return;
         }
 
@@ -60,18 +62,30 @@ export const useNFC = () => {
 
         NFC.onError((error: NFCError) => {
           console.error('NFC Error:', error);
+          const errorMsg = `Error NFC: ${JSON.stringify(error)}`;
+          setErrorMessage(errorMsg);
           toast.error('Error al leer tag NFC');
         });
         
         await NFC.startScan();
         setIsScanning(true);
         setPermissionStatus('granted');
+        setErrorMessage('');
         toast.success('NFC activado - Acerca un tag');
           
       } catch (error: any) {
         console.error('Error initializing NFC:', error);
-        setIsSupported(false);
-        setPermissionStatus('denied');
+        const errorMsg = error.message || error.toString();
+        setErrorMessage(errorMsg);
+        
+        // Don't mark as "denied" if it's just plugin not implemented or device not supported
+        if (errorMsg.includes('not implemented') || errorMsg.includes('not available')) {
+          setPermissionStatus('unknown');
+          setIsSupported(false);
+        } else {
+          setPermissionStatus('denied');
+        }
+        
         toast.error('Error al inicializar NFC');
       }
     };
@@ -102,7 +116,22 @@ export const useNFC = () => {
     }
   };
 
-  const stopScan = async () => {
+  const startScan = useCallback(async () => {
+    try {
+      await NFC.startScan();
+      setIsScanning(true);
+      setPermissionStatus('granted');
+      setErrorMessage('');
+      toast.success('NFC activado - Acerca un tag');
+    } catch (error: any) {
+      console.error('Error starting NFC scan:', error);
+      const errorMsg = error.message || error.toString();
+      setErrorMessage(errorMsg);
+      toast.error('Error al iniciar escaneo NFC');
+    }
+  }, []);
+
+  const stopScan = useCallback(async () => {
     try {
       if (Capacitor.isNativePlatform()) {
         await NFC.cancelScan();
@@ -111,7 +140,7 @@ export const useNFC = () => {
     } catch (error) {
       console.error('Error stopping NFC scan:', error);
     }
-  };
+  }, []);
 
   const loadScansFromStorage = () => {
     const savedScans = localStorage.getItem('pudis-scans');
@@ -183,10 +212,12 @@ export const useNFC = () => {
     scans,
     currentAudio,
     permissionStatus,
+    errorMessage,
     saveScan,
     simulateScan,
     clearHistory,
     playAudio,
+    startScan,
     stopScan,
   };
 };

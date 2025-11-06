@@ -5,9 +5,10 @@ interface NFCBannerProps {
   isSupported: boolean;
   isScanning: boolean;
   permissionStatus?: 'unknown' | 'granted' | 'denied';
+  errorMessage?: string;
 }
 
-export const NFCBanner = ({ isSupported, isScanning, permissionStatus }: NFCBannerProps) => {
+export const NFCBanner = ({ isSupported, isScanning, permissionStatus, errorMessage }: NFCBannerProps) => {
   return (
     <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-8 text-center">
       <div className={cn(
@@ -18,29 +19,48 @@ export const NFCBanner = ({ isSupported, isScanning, permissionStatus }: NFCBann
       </div>
       
       <h2 className="text-2xl font-bold text-foreground mb-2">
-        {isScanning ? 'Waiting for NFC Tag...' : 'NFC Ready'}
+        {isScanning ? 'Esperando Tag NFC...' : isSupported ? 'NFC Listo' : 'NFC No Disponible'}
       </h2>
       
       <p className="text-muted-foreground mb-4">
         {isScanning 
-          ? 'Tap an NFC tag to play your magic music' 
-          : 'NFC scanning is ready'}
+          ? 'Acerca un tag NFC para reproducir música' 
+          : isSupported 
+          ? 'El escaneo NFC está listo para usar'
+          : 'Este dispositivo no soporta NFC o el plugin no está configurado'}
       </p>
       
-      {permissionStatus === 'denied' && (
-        <p className="text-destructive text-sm mb-4">
-          ⚠️ NFC permissions required. Enable in settings.
-        </p>
+      {errorMessage && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 mb-4">
+          <p className="text-destructive text-sm font-medium mb-1">
+            ⚠️ Error de NFC
+          </p>
+          <p className="text-destructive/80 text-xs">
+            {errorMessage}
+          </p>
+        </div>
       )}
       
-      <div className="flex items-center justify-center gap-2 text-sm">
-        <Smartphone className="w-4 h-4" />
-        <span className={cn(
-          "font-medium",
-          isSupported ? "text-primary" : "text-muted-foreground"
-        )}>
-          {isSupported ? 'NFC Enabled' : 'NFC Not Available'}
-        </span>
+      <div className="grid gap-2 text-sm">
+        <div className="flex items-center justify-center gap-2">
+          <Smartphone className="w-4 h-4" />
+          <span className={cn(
+            "font-medium",
+            isSupported ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+          )}>
+            Dispositivo: {isSupported ? '✓ Compatible' : '✗ No soportado'}
+          </span>
+        </div>
+        
+        <div className="flex items-center justify-center gap-2">
+          <Wifi className="w-4 h-4" />
+          <span className={cn(
+            "font-medium",
+            isScanning ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
+          )}>
+            Escaneo: {isScanning ? '⚡ Activo' : '○ Inactivo'}
+          </span>
+        </div>
       </div>
     </div>
   );

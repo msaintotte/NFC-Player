@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { useNFC } from '@/hooks/useNFC';
 
 const Index = () => {
-  const { isSupported, isScanning, scans, currentAudio, permissionStatus, playAudio } = useNFC();
+  const { isSupported, isScanning, scans, currentAudio, permissionStatus, errorMessage, playAudio } = useNFC();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -17,6 +17,7 @@ const Index = () => {
           isSupported={isSupported} 
           isScanning={isScanning}
           permissionStatus={permissionStatus}
+          errorMessage={errorMessage}
         />
         
         <CurrentPlayer audio={currentAudio} />
