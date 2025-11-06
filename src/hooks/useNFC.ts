@@ -41,17 +41,41 @@ export const useNFC = () => {
           console.log('NFC Tag detected:', data);
           
           try {
-            const audioId = parseNdefMessage(data);
+            const content = parseNdefMessage(data);
             
-            if (audioId) {
-              const config = getAudioConfig(audioId);
+            if (content) {
+              const config = getAudioConfig(content);
               
               if (config) {
+                // Tag reconocido en audioConfigs
                 saveScan(config);
                 playAudio(config);
                 toast.success(`🎵 ${config.title}`);
               } else {
-                toast.warning('Tag no reconocido: ' + audioId);
+                // Tag no reconocido - verificar si es una URL directa
+                const isYouTube = content.includes('youtube.com') || content.includes('youtu.be');
+                const isSpotify = content.includes('spotify.com');
+                
+                if (isYouTube || isSpotify) {
+                  // Crear config temporal para guardar en historial
+                  const tempConfig: AudioConfig = {
+                    id: `url_${Date.now()}`,
+                    title: isYouTube ? 'YouTube Link' : 'Spotify Link',
+                    artist: 'Direct URL',
+                    description: content,
+                    type: isYouTube ? 'youtube' : 'spotify',
+                    youtubeUrl: isYouTube ? content : undefined,
+                    spotifyUrl: isSpotify ? content : undefined,
+                  };
+                  
+                  saveScan(tempConfig);
+                  openUrl(content);
+                  
+                  const shortUrl = content.length > 40 ? content.substring(0, 40) + '...' : content;
+                  toast.success(`🔗 Abriendo: ${shortUrl}`);
+                } else {
+                  toast.warning('Tag no reconocido: ' + content);
+                }
               }
             }
           } catch (error) {
@@ -67,7 +91,7 @@ export const useNFC = () => {
           toast.error('Error al leer tag NFC');
         });
         
-        await NFC.startScan();
+        // En Android, el escaneo es automático después de registrar los listeners
         setIsScanning(true);
         setPermissionStatus('granted');
         setErrorMessage('');
@@ -106,10 +130,11 @@ export const useNFC = () => {
       const firstRecord = firstMessage.records[0];
       if (!firstRecord?.payload) return null;
 
-      let audioId = firstRecord.payload;
-      audioId = audioId.replace(/^\x02en/, '').replace(/^\x03/, '').trim();
+      let content = firstRecord.payload;
+      // Limpiar prefijos comunes de NDEF pero preservar URLs completas
+      content = content.replace(/^\x02en/, '').replace(/^\x03/, '').trim();
 
-      return audioId;
+      return content;
     } catch (error) {
       console.error('Error parsing NDEF message:', error);
       return null;
@@ -117,18 +142,11 @@ export const useNFC = () => {
   };
 
   const startScan = useCallback(async () => {
-    try {
-      await NFC.startScan();
-      setIsScanning(true);
-      setPermissionStatus('granted');
-      setErrorMessage('');
-      toast.success('NFC activado - Acerca un tag');
-    } catch (error: any) {
-      console.error('Error starting NFC scan:', error);
-      const errorMsg = error.message || error.toString();
-      setErrorMessage(errorMsg);
-      toast.error('Error al iniciar escaneo NFC');
-    }
+    // En Android, el escaneo es automático - solo actualizamos el estado
+    setIsScanning(true);
+    setPermissionStatus('granted');
+    setErrorMessage('');
+    toast.info('En Android el escaneo es automático');
   }, []);
 
   const stopScan = useCallback(async () => {

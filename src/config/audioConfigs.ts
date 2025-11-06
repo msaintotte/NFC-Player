@@ -63,6 +63,26 @@ export const audioConfigs: Record<string, AudioConfig> = {
     type: 'local',
     audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   },
+  youtube1: {
+    id: 'youtube1',
+    title: 'Video de Prueba',
+    artist: 'YouTube',
+    description: 'Video de prueba para NFC',
+    albumArt: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0',
+    duration: '3:30',
+    type: 'youtube',
+    youtubeUrl: 'https://www.youtube.com/watch?v=hPrDqHFQdZo',
+  },
+  spotify1: {
+    id: 'spotify1',
+    title: 'Canción de Prueba',
+    artist: 'Spotify',
+    description: 'Canción de prueba para NFC',
+    albumArt: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17',
+    duration: '4:20',
+    type: 'spotify',
+    spotifyUrl: 'https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp',
+  },
 };
 
 export const getAudioConfig = (id: string): AudioConfig | undefined => {

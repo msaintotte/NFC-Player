@@ -74,10 +74,17 @@ export default function NFCDebug() {
         toast.error('NFC Error');
       });
 
-      await NFC.startScan();
-      setIsScanning(true);
-      addLog('✅ Scan started successfully');
-      toast.success('Scanning started - tap an NFC tag');
+      // En Android, el escaneo es automático después de registrar listeners
+      if (Capacitor.getPlatform() === 'android') {
+        setIsScanning(true);
+        addLog('✅ Listeners registered (Android scans automatically)');
+        toast.success('Escaneo activo (automático en Android)');
+      } else {
+        await NFC.startScan();
+        setIsScanning(true);
+        addLog('✅ Scan started successfully');
+        toast.success('Scanning started - tap an NFC tag');
+      }
     } catch (error: any) {
       addLog(`❌ startScan() error: ${error.message || error}`);
       setLastError(error.message || 'Unknown error');
@@ -116,7 +123,7 @@ export default function NFCDebug() {
             </CardHeader>
             <CardContent>
               <Badge variant={Capacitor.isNativePlatform() ? "default" : "secondary"}>
-                {Capacitor.isNativePlatform() ? 'Native' : 'Web'}
+                {Capacitor.isNativePlatform() ? `${Capacitor.getPlatform().toUpperCase()}` : 'Web'}
               </Badge>
             </CardContent>
           </Card>
@@ -180,10 +187,16 @@ export default function NFCDebug() {
                 Start Scan
               </Button>
             ) : (
-              <Button onClick={stopScanning} className="w-full" variant="destructive">
+              <Button onClick={stopScanning} className="w-full" variant="secondary">
                 <Square className="w-4 h-4 mr-2" />
-                Stop Scan
+                {Capacitor.getPlatform() === 'android' ? 'Escaneo activo (automático)' : 'Stop Scan'}
               </Button>
+            )}
+            
+            {Capacitor.getPlatform() === 'android' && (
+              <p className="text-xs text-muted-foreground text-center">
+                💡 En Android el escaneo es automático al abrir la app
+              </p>
             )}
           </CardContent>
         </Card>
