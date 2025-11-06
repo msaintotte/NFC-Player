@@ -1,17 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AudioConfig, getAudioConfig } from '@/config/audioConfigs';
 import { toast } from 'sonner';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+interface NFCTag {
+  id: string;
+  ndefMessage?: {
+    records: Array<{
+      payload: number[];
+    }>;
+  };
+}
+
+interface NFCError {
+  code: string;
+  message: string;
+}
+
+interface NFCReaderPlugin {
+  initialize(): Promise<{ value: boolean }>;
+  startScanning(): Promise<void>;
+  stopScanning(): Promise<void>;
+  addListener(
+    eventName: 'nfcTagDetected',
+    listenerFunc: (tag: NFCTag) => void
+  ): Promise<any>;
+  addListener(
+    eventName: 'nfcError',
+    listenerFunc: (error: NFCError) => void
+  ): Promise<any>;
+  removeAllListeners(): Promise<void>;
+}
+
+const NfcReader = registerPlugin<NFCReaderPlugin>('CapacitorNfcReader');
 
 interface NFCScan {
   id: string;
   timestamp: number;
   audioConfig: AudioConfig;
-}
-
-declare global {
-  interface Window {
-    NDEFReader: any;
-  }
 }
 
 export const useNFC = () => {
@@ -23,29 +49,55 @@ export const useNFC = () => {
 
   useEffect(() => {
     const initNFC = async () => {
-      if ('NDEFReader' in window) {
+      if (Capacitor.isNativePlatform()) {
         setIsSupported(true);
         
         try {
-          const permissionStatus = await navigator.permissions.query({ name: 'nfc' as PermissionName });
+          await NfcReader.initialize();
+          console.log('NFC initialized successfully');
           
-          if (permissionStatus.state === 'granted') {
-            setPermissionStatus('granted');
-            await startAutoScan();
-          } else if (permissionStatus.state === 'prompt') {
-            setPermissionStatus('unknown');
-            await startAutoScan();
-          } else {
-            setPermissionStatus('denied');
-          }
+          NfcReader.addListener('nfcTagDetected', (event: any) => {
+            console.log('NFC Tag detected:', event);
+            
+            try {
+              const audioId = parseNdefMessage(event);
+              
+              if (audioId) {
+                const config = getAudioConfig(audioId);
+                
+                if (config) {
+                  saveScan(config);
+                  playAudio(config);
+                  toast.success(`🎵 ${config.title}`);
+                } else {
+                  toast.warning('Tag no reconocido: ' + audioId);
+                }
+              }
+            } catch (error) {
+              console.error('Error processing NFC tag:', error);
+              toast.error('Error al leer el tag');
+            }
+          });
           
-          permissionStatus.onchange = () => {
-            setPermissionStatus(permissionStatus.state as any);
-          };
-        } catch (error) {
-          console.log('Permissions API not supported, attempting scan anyway');
-          await startAutoScan();
+          NfcReader.addListener('nfcError', (error: any) => {
+            console.error('NFC Error:', error);
+            toast.error('Error al leer tag NFC');
+          });
+          
+          await NfcReader.startScanning();
+          setIsScanning(true);
+          setPermissionStatus('granted');
+          toast.success('NFC activado - Acerca un tag');
+          
+        } catch (error: any) {
+          console.error('Error initializing NFC:', error);
+          setIsSupported(false);
+          setPermissionStatus('denied');
+          toast.error('Error al inicializar NFC');
         }
+      } else {
+        setIsSupported(false);
+        console.log('NFC only supported on native platforms');
       }
     };
 
@@ -53,73 +105,36 @@ export const useNFC = () => {
     loadScansFromStorage();
   }, []);
 
-  const startAutoScan = async () => {
+  const parseNdefMessage = (event: any): string | null => {
     try {
-      const ndef = new window.NDEFReader();
-      setIsScanning(true);
-      
-      await ndef.scan();
-      setPermissionStatus('granted');
-      toast.success('NFC activado - Acerca un tag');
-      
-      ndef.onreading = (event: any) => {
-        console.log('NFC Tag detected:', event);
+      if (event.ndefMessage && event.ndefMessage.records) {
+        const textDecoder = new TextDecoder();
+        const firstRecord = event.ndefMessage.records[0];
         
-        try {
-          const message = event.message;
+        if (firstRecord && firstRecord.payload) {
+          const payload = new Uint8Array(firstRecord.payload);
+          let audioId = textDecoder.decode(payload);
           
-          if (message && message.records && message.records.length > 0) {
-            const textDecoder = new TextDecoder();
-            const firstRecord = message.records[0];
-            
-            let audioId = '';
-            
-            if (firstRecord.recordType === 'text') {
-              const textData = firstRecord.data;
-              const decoded = textDecoder.decode(textData);
-              audioId = decoded.replace(/^\x02en/, '').trim();
-            } else if (firstRecord.recordType === 'url') {
-              audioId = textDecoder.decode(firstRecord.data);
-            }
-            
-            if (audioId) {
-              const config = getAudioConfig(audioId);
-              
-              if (config) {
-                saveScan(config);
-                playAudio(config);
-                toast.success(`🎵 ${config.title}`);
-              } else {
-                toast.warning('Tag no reconocido: ' + audioId);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error processing NFC tag:', error);
-          toast.error('Error al leer el tag');
+          audioId = audioId.replace(/^\x02en/, '').replace(/^\x03/, '').trim();
+          
+          return audioId;
         }
-      };
-      
-      ndef.onreadingerror = () => {
-        toast.error('Error al leer el tag NFC');
-      };
-      
-    } catch (error: any) {
-      console.error('Error starting NFC scan:', error);
-      
-      if (error.name === 'NotAllowedError') {
-        setPermissionStatus('denied');
-        toast.error('Permisos NFC denegados');
-      } else {
-        toast.error('Error al iniciar escaneo NFC');
       }
-      
-      setIsScanning(false);
+    } catch (error) {
+      console.error('Error parsing NDEF message:', error);
     }
+    return null;
   };
 
   const stopScan = async () => {
-    setIsScanning(false);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await NfcReader.stopScanning();
+      }
+      setIsScanning(false);
+    } catch (error) {
+      console.error('Error stopping NFC scan:', error);
+    }
   };
 
   const loadScansFromStorage = () => {

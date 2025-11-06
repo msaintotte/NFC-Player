@@ -21,7 +21,7 @@ export const audioConfigs: Record<string, AudioConfig> = {
     albumArt: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d',
     duration: '3:45',
     type: 'local',
-    audioUrl: '/audio/totoro-lullaby.mp3',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   podcast1: {
     id: 'podcast1',
@@ -41,7 +41,7 @@ export const audioConfigs: Record<string, AudioConfig> = {
     albumArt: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570',
     duration: '45:30',
     type: 'local',
-    audioUrl: '/audio/meditations-book1.mp3',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
   chill: {
     id: 'chill',
@@ -61,7 +61,7 @@ export const audioConfigs: Record<string, AudioConfig> = {
     albumArt: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f',
     duration: '5:37',
     type: 'local',
-    audioUrl: '/audio/blue-in-green.mp3',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   },
 };
 
