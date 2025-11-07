@@ -1,14 +1,16 @@
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
-import { Tag, Plus } from 'lucide-react';
-import { getAllConfigs } from '@/config/audioConfigs';
+import { Tag, Plus, Loader2 } from 'lucide-react';
+import { useAudioConfigs } from '@/hooks/useAudioConfigs';
 import { useNFC } from '@/hooks/useNFC';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const Tags = () => {
-  const configs = getAllConfigs();
+  const { configs, isLoading } = useAudioConfigs();
   const { simulateScan } = useNFC();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -22,8 +24,21 @@ const Tags = () => {
           </p>
         </div>
 
-        <div className="space-y-4">
-          {configs.map((config) => {
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : configs.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">No hay audios configurados aún</p>
+            <Button onClick={() => navigate('/admin')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Agregar tu primer audio
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {configs.map((config) => {
             const getTypeColor = (type: string) => {
               switch (type) {
                 case 'spotify':
@@ -75,14 +90,16 @@ const Tags = () => {
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <Button
           className="w-full mt-6"
           variant="outline"
           size="lg"
+          onClick={() => navigate('/admin')}
         >
           <Plus className="w-5 h-5 mr-2" />
           Add New Tag

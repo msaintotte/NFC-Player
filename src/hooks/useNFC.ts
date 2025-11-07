@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AudioConfig, getAudioConfig } from '@/config/audioConfigs';
+import { AudioConfig } from '@/config/audioConfigs';
+import { getAudioConfigById } from '@/hooks/useAudioConfigs';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { NFC, NDEFMessagesTransformable, NFCError } from '@exxili/capacitor-nfc';
@@ -41,14 +42,14 @@ export const useNFC = () => {
           return;
         }
 
-        NFC.onRead((data: NDEFMessagesTransformable) => {
+        NFC.onRead(async (data: NDEFMessagesTransformable) => {
           console.log('NFC Tag detected:', data);
           
           try {
             const content = parseNdefMessage(data);
             
             if (content) {
-              const config = getAudioConfig(content);
+              const config = await getAudioConfigById(content);
               
               if (config) {
                 // Tag reconocido en audioConfigs
@@ -272,8 +273,8 @@ export const useNFC = () => {
     // No abrir URLs automáticamente - el CurrentPlayer tiene el botón para abrir si el usuario quiere
   }, []);
 
-  const simulateScan = useCallback((audioId: string) => {
-    const config = getAudioConfig(audioId);
+  const simulateScan = useCallback(async (audioId: string) => {
+    const config = await getAudioConfigById(audioId);
     if (config) {
       saveScan(config);
       playAudio(config);
