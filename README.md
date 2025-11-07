@@ -50,6 +50,16 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## 🎵 Gestión de Audios Locales
+
+Para agregar nuevos audios a tu app, consulta la guía completa en [AUDIO_GUIDE.md](./AUDIO_GUIDE.md).
+
+### Quick Start:
+1. Coloca tu archivo `.mp3` o `.m4a` en `public/audio/`
+2. Registra el audio en `src/config/audioConfigs.ts`
+3. Ejecuta `npm run build && npx cap sync android`
+4. ¡Escanea tu etiqueta NFC configurada!
+
 ## What technologies are used for this project?
 
 This project is built with:
@@ -59,6 +69,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Capacitor (for Android NFC support)
 
 ## How can I deploy this project?
 

@@ -83,6 +83,16 @@ export const audioConfigs: Record<string, AudioConfig> = {
     type: 'spotify',
     spotifyUrl: 'https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp',
   },
+  marcopolo: {
+    id: 'marcopolo',
+    title: 'Marco Aurelio - Meditaciones',
+    artist: 'Marco Aurelio',
+    description: 'Sabiduría estoica del emperador romano',
+    albumArt: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570',
+    duration: '45:30',
+    type: 'local',
+    audioUrl: '/audio/marco-polo.m4a',
+  },
 };
 
 export const getAudioConfig = (id: string): AudioConfig | undefined => {
