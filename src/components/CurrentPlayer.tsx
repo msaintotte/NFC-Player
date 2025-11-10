@@ -4,6 +4,8 @@ import { AudioConfig } from '@/config/audioConfigs';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useKeepAwake } from '@/hooks/useKeepAwake';
+import { useKeepAwakeSettings } from '@/hooks/useKeepAwakeSettings';
 
 interface CurrentPlayerProps {
   audio: AudioConfig | null;
@@ -11,6 +13,17 @@ interface CurrentPlayerProps {
 
 export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
   const { isPlaying, currentTime, duration, togglePlay, seek, loadAudio } = useAudioPlayer();
+  const { isKeepAwakeEnabled } = useKeepAwakeSettings();
+
+  // Determinar si se debe mantener la pantalla activa
+  const shouldKeepAwake = audio !== null && (
+    audio.type === 'youtube' || 
+    audio.type === 'spotify' || 
+    (audio.type === 'local' && isPlaying)
+  );
+
+  // Activar/desactivar Keep Awake basado en el estado
+  useKeepAwake(shouldKeepAwake, isKeepAwakeEnabled);
 
   useEffect(() => {
     if (audio?.type === 'local' && audio.audioUrl) {

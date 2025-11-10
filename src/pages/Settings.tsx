@@ -1,16 +1,28 @@
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
-import { Trash2, Info } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Trash2, Info, Smartphone } from 'lucide-react';
 import { useNFC } from '@/hooks/useNFC';
+import { useKeepAwakeSettings } from '@/hooks/useKeepAwakeSettings';
 import { toast } from 'sonner';
 
 const Settings = () => {
   const { clearHistory, scans } = useNFC();
+  const { isKeepAwakeEnabled, toggleKeepAwake } = useKeepAwakeSettings();
 
   const handleClearHistory = () => {
     clearHistory();
     toast.success('History cleared successfully');
+  };
+
+  const handleToggleKeepAwake = () => {
+    toggleKeepAwake();
+    toast.success(
+      isKeepAwakeEnabled 
+        ? 'La pantalla ahora puede apagarse durante la reproducción' 
+        : 'La pantalla permanecerá activa durante la reproducción'
+    );
   };
 
   return (
@@ -26,6 +38,25 @@ const Settings = () => {
         </div>
 
         <div className="space-y-4">
+          <div className="bg-card rounded-lg p-6 shadow-card">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              Playback
+            </h2>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="font-medium">Keep Screen Awake</p>
+                <p className="text-sm text-muted-foreground">
+                  Prevent screen from turning off during playback
+                </p>
+              </div>
+              <Switch
+                checked={isKeepAwakeEnabled}
+                onCheckedChange={handleToggleKeepAwake}
+              />
+            </div>
+          </div>
+
           <div className="bg-card rounded-lg p-6 shadow-card">
             <h2 className="text-lg font-semibold mb-4">About</h2>
             <div className="space-y-2 text-sm">
