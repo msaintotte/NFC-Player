@@ -15,7 +15,16 @@ export const useAudioConfigs = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as AudioConfig[];
+      
+      // Convert snake_case to camelCase for TypeScript
+      return (data || []).map((item: any) => ({
+        ...item,
+        albumArt: item.album_art,
+        audioUrl: item.audio_url,
+        spotifyUrl: item.spotify_url,
+        youtubeUrl: item.youtube_url,
+        newsletterUrl: item.newsletter_url,
+      })) as AudioConfig[];
     },
   });
 
@@ -46,9 +55,22 @@ export const useAudioConfigs = () => {
 
   const createConfig = useMutation({
     mutationFn: async (config: Omit<AudioConfig, 'created_at' | 'updated_at'>) => {
+      // Convert camelCase to snake_case for database
+      const dbConfig = {
+        ...config,
+        album_art: config.albumArt,
+        audio_url: config.audioUrl,
+        spotify_url: config.spotifyUrl,
+        youtube_url: config.youtubeUrl,
+        newsletter_url: config.newsletterUrl,
+      };
+      
+      // Remove camelCase properties
+      const { albumArt, audioUrl, spotifyUrl, youtubeUrl, newsletterUrl, ...rest } = dbConfig as any;
+      
       const { error } = await supabase
         .from('audio_configs')
-        .insert([config]);
+        .insert([rest]);
 
       if (error) throw error;
     },
@@ -125,5 +147,15 @@ export const getAudioConfigById = async (id: string): Promise<AudioConfig | null
     return null;
   }
 
-  return data as AudioConfig | null;
+  if (!data) return null;
+
+  // Convert snake_case to camelCase for TypeScript
+  return {
+    ...data,
+    albumArt: data.album_art,
+    audioUrl: data.audio_url,
+    spotifyUrl: data.spotify_url,
+    youtubeUrl: data.youtube_url,
+    newsletterUrl: data.newsletter_url,
+  } as AudioConfig;
 };

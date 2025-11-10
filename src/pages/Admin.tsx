@@ -163,7 +163,7 @@ export default function Admin() {
                     <Input
                       id="file"
                       type="file"
-                      accept="audio/*"
+                      accept="audio/*,.m4a,.mp3,.wav,.ogg,.aac"
                       onChange={handleFileChange}
                       className="flex-1"
                     />
@@ -173,6 +173,9 @@ export default function Admin() {
                       </span>
                     )}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Formatos soportados: MP3, M4A, WAV, OGG, AAC (máx. 50MB)
+                  </p>
                 </div>
               )}
 
