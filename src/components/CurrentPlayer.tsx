@@ -12,7 +12,7 @@ interface CurrentPlayerProps {
 }
 
 export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
-  const { isPlaying, currentTime, duration, togglePlay, seek, loadAudio } = useAudioPlayer();
+  const { isPlaying, currentTime, duration, togglePlay, seek, loadAudio, play } = useAudioPlayer();
   const { isKeepAwakeEnabled } = useKeepAwakeSettings();
 
   // Determinar si se debe mantener la pantalla activa
@@ -28,8 +28,12 @@ export const CurrentPlayer = ({ audio }: CurrentPlayerProps) => {
   useEffect(() => {
     if (audio?.type === 'local' && audio.audioUrl) {
       loadAudio(audio.audioUrl);
+      // Auto-play después de cargar
+      setTimeout(() => {
+        play();
+      }, 100);
     }
-  }, [audio?.audioUrl, loadAudio, audio?.type]);
+  }, [audio?.audioUrl, loadAudio, audio?.type, play]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
