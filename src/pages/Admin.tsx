@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
@@ -8,12 +9,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAudioConfigs } from '@/hooks/useAudioConfigs';
-import { Upload, Trash2, Music, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Upload, Trash2, Music, Loader2, LogOut, ShieldAlert } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AudioConfig } from '@/config/audioConfigs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export default function Admin() {
+  const navigate = useNavigate();
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const { configs, isLoading, uploadAudio, createConfig, deleteConfig } = useAudioConfigs();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -31,6 +35,13 @@ export default function Admin() {
     newsletterUrl: '',
   });
 
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -43,6 +54,12 @@ export default function Admin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAdmin) {
+      toast.error('No tienes permisos de administrador');
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -97,22 +114,80 @@ export default function Admin() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isAdmin) {
+      toast.error('No tienes permisos de administrador');
+      return;
+    }
+    
     if (confirm('¿Estás seguro de que quieres eliminar este audio?')) {
       await deleteConfig.mutateAsync(id);
     }
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show access denied if logged in but not admin
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <Header />
+        <main className="container max-w-4xl mx-auto px-4 py-16">
+          <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <CardTitle>Acceso Denegado</CardTitle>
+              <CardDescription>
+                No tienes permisos de administrador para acceder a esta página.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Contacta al administrador del sistema para obtener acceso.
+              </p>
+              <p className="text-xs text-muted-foreground text-center">
+                Usuario: {user.email}
+              </p>
+              <Button onClick={handleSignOut} variant="outline" className="w-full">
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
       <main className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Music className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestión de Audios</h1>
-            <p className="text-muted-foreground">Sube y administra tus archivos de audio</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Music className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Gestión de Audios</h1>
+              <p className="text-muted-foreground">Sube y administra tus archivos de audio</p>
+            </div>
           </div>
+          <Button onClick={handleSignOut} variant="outline" size="sm">
+            <LogOut className="mr-2 h-4 w-4" />
+            Salir
+          </Button>
         </div>
 
         <Card className="mb-8">
