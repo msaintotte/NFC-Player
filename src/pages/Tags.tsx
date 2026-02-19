@@ -3,13 +3,13 @@ import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Tag, Plus, Loader2 } from 'lucide-react';
 import { useAudioConfigs } from '@/hooks/useAudioConfigs';
-import { useNFC } from '@/hooks/useNFC';
+import { useNFCContext } from '@/contexts/NFCContext';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 const Tags = () => {
   const { configs, isLoading } = useAudioConfigs();
-  const { simulateScan } = useNFC();
+  const { simulateScan } = useNFCContext();
   const navigate = useNavigate();
 
   return (
@@ -18,9 +18,9 @@ const Tags = () => {
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-24">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">My Tags</h1>
+          <h1 className="text-2xl font-bold mb-2">Mis Tags</h1>
           <p className="text-muted-foreground">
-            Manage your NFC tags and test audio configurations
+            Gestiona tus tags NFC y prueba las configuraciones de audio
           </p>
         </div>
 
@@ -85,7 +85,7 @@ const Tags = () => {
                       className="w-full sm:w-auto"
                     >
                       <Tag className="w-4 h-4 mr-2" />
-                      Test Scan
+                      Probar scan
                     </Button>
                   </div>
                 </div>
@@ -102,7 +102,7 @@ const Tags = () => {
           onClick={() => navigate('/admin')}
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add New Tag
+          Agregar nuevo tag
         </Button>
       </main>
 

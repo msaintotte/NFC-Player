@@ -23,18 +23,18 @@ export const RecentMagic = ({ scans, onPlay }: RecentMagicProps) => {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
     
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    if (minutes < 1) return 'Ahora mismo';
+    if (minutes < 60) return `Hace ${minutes}m`;
+    if (hours < 24) return `Hace ${hours}h`;
+    return `Hace ${days}d`;
   };
 
   if (scans.length === 0) {
     return (
       <div className="text-center py-8">
         <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-        <p className="text-muted-foreground">No recent scans</p>
-        <p className="text-sm text-muted-foreground">Tap an NFC tag to get started</p>
+        <p className="text-muted-foreground">Sin escaneos recientes</p>
+        <p className="text-sm text-muted-foreground">Acerca un tag NFC para comenzar</p>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export const RecentMagic = ({ scans, onPlay }: RecentMagicProps) => {
     <div>
       <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
         <Clock className="w-5 h-5" />
-        Recent Magic
+        Reproducidos recientemente
       </h2>
       
       <div className="grid grid-cols-2 gap-4">

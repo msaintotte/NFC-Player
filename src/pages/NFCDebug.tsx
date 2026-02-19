@@ -1,20 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Smartphone, Wifi, WifiOff, Play, Square, AlertCircle } from 'lucide-react';
+import { Smartphone, Wifi, WifiOff, Play, Square, AlertCircle, Loader2, ShieldAlert, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { NFC, NDEFMessagesTransformable, NFCError } from '@exxili/capacitor-nfc';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function NFCDebug() {
+  const navigate = useNavigate();
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const [isSupported, setIsSupported] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [lastRead, setLastRead] = useState<string>('');
   const [lastError, setLastError] = useState<string>('');
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <Header />
+        <main className="container max-w-4xl mx-auto px-4 py-16">
+          <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <CardTitle>Acceso Denegado</CardTitle>
+              <CardDescription>
+                No tienes permisos de administrador para acceder al panel de debug NFC.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground text-center">
+                Usuario: {user.email}
+              </p>
+              <Button onClick={async () => { await signOut(); navigate('/'); }} variant="outline" className="w-full">
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
