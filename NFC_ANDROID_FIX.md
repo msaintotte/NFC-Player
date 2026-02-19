@@ -1,178 +1,100 @@
-# Fix para NFC Plugin - Android 11+ Compatibility
+# Fix NFC Plugin - Android 11+ Compatibility
 
 ## Problema
-El plugin `@exxili/capacitor-nfc` versión 0.0.12 usa una API deprecada de Android (`getParcelableExtra`) que causa problemas en Android 11+.
-
-## Solución Implementada
-Se usa `patch-package` para mantener un parche persistente que maneja correctamente las diferentes versiones de Android.
+El plugin `@exxili/capacitor-nfc` v0.0.12 usa `getParcelableExtra<Tag>()` que fue deprecado
+en Android 13 (API 33) y puede causar warnings o crashes en Android 11+.
 
 ---
 
-## Pasos para Completar la Implementación
+## Solución: Script PowerShell (recomendado en Windows)
 
-### 1. Agregar Script Postinstall (REQUERIDO)
+En lugar de patch-package (que requiere el diff exacto del archivo original),
+se incluye un script PowerShell que modifica el archivo directamente.
 
-**Edita manualmente el archivo `package.json`** y agrega esta línea en la sección `"scripts"`:
+### Pasos
 
-```json
-"scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "build:dev": "vite build --mode development",
-  "lint": "eslint .",
-  "preview": "vite preview",
-  "postinstall": "patch-package"  // ← AGREGAR ESTA LÍNEA
-}
+**1. Exportar y clonar el proyecto**
 ```
-
-### 2. Exportar Proyecto y Clonar en Local
-
-```bash
-# Exporta el proyecto a GitHub usando el botón "Export to Github"
-# Luego clona el repositorio en tu máquina:
+# Desde el botón "Export to Github" en Lovable, luego:
 git clone <tu-repositorio>
 cd <nombre-proyecto>
 npm install
 ```
 
-### 3. Modificar el Archivo del Plugin
+**2. Ejecutar el script de parche**
 
-**Abre el archivo:**
+Desde el Símbolo del Sistema (cmd), ir a la raíz del proyecto y ejecutar:
 ```
-node_modules/@exxili/capacitor-nfc/android/src/main/java/com/exxili/capacitornfc/NFCPlugin.kt
-```
-
-**Paso 3.1: Agregar import**
-Al inicio del archivo, después de los otros imports, agrega:
-```kotlin
-import android.os.Build
+powershell -ExecutionPolicy Bypass -File fix-nfc-android11.ps1
 ```
 
-**Paso 3.2: Modificar la función handleWriteTag()**
-Busca la línea que dice:
+El script:
+- Agrega `import android.os.Build` al archivo del plugin
+- Reemplaza `intent.getParcelableExtra<Tag>(...)` con lógica condicional por versión de Android
+- Muestra instrucciones si no puede encontrar el patrón exacto (versión diferente del plugin)
+
+**3. Compilar y sincronizar**
+```
+npm run build
+npx cap sync android
+npx cap open android
+```
+
+**4. Compilar en Android Studio**
+
+En Android Studio:
+- Build → Clean Project
+- Build → Rebuild Project
+- Run → Run 'app'
+
+---
+
+## Qué hace el parche exactamente
+
+### Antes (código deprecado):
 ```kotlin
 val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
 ```
 
-Y reemplázala por:
+### Después (compatible Android 11+):
 ```kotlin
+import android.os.Build  // ← import agregado
+
 val tag: Tag? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-    intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
+    intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)  // API 33+
 } else {
     @Suppress("DEPRECATION")
-    intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+    intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)  // API < 33
 }
 ```
 
-### 4. Generar el Patch
+---
 
-Ejecuta este comando en la raíz del proyecto:
-```bash
-npx patch-package @exxili/capacitor-nfc
-```
+## Si el script no encuentra el patrón
 
-Esto creará automáticamente el archivo `patches/@exxili+capacitor-nfc+0.0.12.patch`.
+Significa que la versión del plugin tiene código diferente al esperado.
+El script mostrará las instrucciones para hacer el cambio manualmente en Android Studio:
 
-### 5. Verificar el Patch
-
-Comprueba que se creó el directorio `patches/` con el archivo del patch dentro.
-
-### 6. Agregar Plataforma Android (si no la tienes)
-
-```bash
-npx cap add android
-```
-
-### 7. Remover Configuración de Desarrollo
-
-**Edita `capacitor.config.ts`** y remueve la sección `server`:
-
-```typescript
-import { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.pudis.app',
-  appName: 'PUDIS',
-  webDir: 'dist'
-  // Remover la sección server para app nativa
-};
-
-export default config;
-```
-
-### 8. Compilar y Sincronizar
-
-```bash
-npm run build
-npx cap sync android
-```
-
-### 9. Ejecutar en Dispositivo Android 11+
-
-```bash
-npx cap run android
-```
-
-O abre el proyecto en Android Studio:
-```bash
-npx cap open android
-```
+1. Abre el archivo en Android Studio:
+   ```
+   node_modules/@exxili/capacitor-nfc/android/src/main/java/com/exxili/capacitornfc/NFCPlugin.kt
+   ```
+2. Busca la línea con `getParcelableExtra<Tag>`
+3. Aplica el reemplazo mostrado por el script
 
 ---
 
-## Verificación del Fix
+## Verificación
 
-✅ **El patch está aplicado si:**
-1. Existe el directorio `patches/` en la raíz
-2. Existe el archivo `patches/@exxili+capacitor-nfc+0.0.12.patch`
-3. El script `postinstall` está en `package.json`
-4. Al ejecutar `npm install`, ves el mensaje "patch-package" en la consola
-
-✅ **El fix funciona si:**
-1. La app se compila sin errores en Android 11+
-2. El plugin NFC lee tags correctamente
-3. No hay crashes al escanear tags NFC
+El script fue aplicado correctamente si:
+- No hay errores al compilar en Android Studio
+- La app lee tags NFC en dispositivos Android 11, 12 y 13
+- No aparecen crashes en Logcat al escanear un tag
 
 ---
 
-## Mantenimiento
+## Notas importantes
 
-### Si actualizas el plugin NFC:
-1. Elimina el archivo patch anterior
-2. Repite los pasos 3-4 con la nueva versión
-3. El nombre del patch cambiará (por ejemplo: `@exxili+capacitor-nfc+0.0.13.patch`)
-
-### Si otro miembro del equipo clona el proyecto:
-El patch se aplicará automáticamente al ejecutar `npm install` (gracias al script postinstall).
-
----
-
-## Consideraciones Importantes
-
-⚠️ **Android Studio**: Necesitas tener Android Studio instalado para compilar y ejecutar en Android.
-
-⚠️ **Versiones de Android**: Este fix es específicamente para Android 11+ (API 30+) donde la API `getParcelableExtra` fue deprecada.
-
-⚠️ **Alternativas**: Considera buscar un plugin NFC más mantenido a largo plazo, como:
-- `@capacitor-community/nfc` (si está disponible)
-- O reporta el issue al repositorio oficial del plugin
-
----
-
-## Troubleshooting
-
-**Error: "patch-package not found"**
-- Ejecuta: `npm install`
-
-**El patch no se aplica**
-- Verifica que el script `postinstall` esté en `package.json`
-- Ejecuta manualmente: `npx patch-package`
-
-**La app no compila en Android**
-- Ejecuta: `npx cap sync android`
-- Limpia el build: En Android Studio -> Build -> Clean Project
-
-**El NFC sigue sin funcionar**
-- Verifica permisos en `AndroidManifest.xml`
-- Revisa logs de Android Studio (Logcat)
-- Prueba en un dispositivo físico (no emulador)
+- **El script debe re-ejecutarse cada vez que hagas `npm install`** (npm borra node_modules)
+- Si actualizas el plugin a una versión nueva, el patrón puede cambiar → revisar el script
+- Este fix es solo necesario para la build nativa de Android; no afecta la versión web
