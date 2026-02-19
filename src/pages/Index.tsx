@@ -3,10 +3,10 @@ import { NFCBanner } from '@/components/NFCBanner';
 import { CurrentPlayer } from '@/components/CurrentPlayer';
 import { RecentMagic } from '@/components/RecentMagic';
 import { BottomNav } from '@/components/BottomNav';
-import { useNFC } from '@/hooks/useNFC';
+import { useNFCContext } from '@/contexts/NFCContext';
 
 const Index = () => {
-  const { isSupported, isScanning, scans, currentAudio, permissionStatus, errorMessage, playAudio } = useNFC();
+  const { isSupported, isScanning, scans, currentAudio, permissionStatus, errorMessage, playAudio } = useNFCContext();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

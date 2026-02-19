@@ -77,11 +77,21 @@ export const useAudioPlayer = () => {
     setVolume(vol);
   }, []);
 
-  const loadAudio = useCallback((url: string) => {
+  const loadAudio = useCallback((url: string, autoplay = false) => {
     if (!audioRef.current) return;
     audioRef.current.src = url;
     setCurrentUrl(url);
     setCurrentTime(0);
+
+    if (autoplay) {
+      const handleCanPlay = () => {
+        audioRef.current?.play().catch((err) => {
+          console.error('Error en autoplay:', err);
+        });
+        audioRef.current?.removeEventListener('canplaythrough', handleCanPlay);
+      };
+      audioRef.current.addEventListener('canplaythrough', handleCanPlay);
+    }
   }, []);
 
   return {
