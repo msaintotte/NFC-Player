@@ -4,11 +4,25 @@
 # Ejecutar desde la raiz del proyecto: powershell -ExecutionPolicy Bypass -File fix-nfc-android11.ps1
 # =============================================================================
 
-$pluginFile = "node_modules\@exxili\capacitor-nfc\android\src\main\kotlin\com\exxili\capacitornfc\NFCPlugin.kt"
+$pluginRelativePath = "node_modules\@exxili\capacitor-nfc\android\src\main\kotlin\com\exxili\capacitornfc\NFCPlugin.kt"
+$pluginFile = Join-Path $PSScriptRoot $pluginRelativePath
+
+# Si no aparece en la ruta esperada, intentar localizarlo automaticamente
+if (-not (Test-Path $pluginFile)) {
+    $pluginBaseDir = Join-Path $PSScriptRoot "node_modules\@exxili\capacitor-nfc"
+    if (Test-Path $pluginBaseDir) {
+        $foundFile = Get-ChildItem -Path $pluginBaseDir -Filter "NFCPlugin.kt" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($foundFile) {
+            $pluginFile = $foundFile.FullName
+            Write-Host "Ruta detectada automaticamente: $pluginFile" -ForegroundColor Cyan
+        }
+    }
+}
 
 # Verificar que el archivo existe
 if (-not (Test-Path $pluginFile)) {
     Write-Host "ERROR: No se encontro el archivo del plugin." -ForegroundColor Red
+    Write-Host "Ruta esperada: $pluginFile" -ForegroundColor Yellow
     Write-Host "Asegurate de haber ejecutado 'npm install' primero." -ForegroundColor Yellow
     exit 1
 }
