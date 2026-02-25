@@ -77,7 +77,7 @@ El script mostrará las instrucciones para hacer el cambio manualmente en Androi
 
 1. Abre el archivo en Android Studio:
    ```
-   node_modules/@exxili/capacitor-nfc/android/src/main/java/com/exxili/capacitornfc/NFCPlugin.kt
+   node_modules/@exxili/capacitor-nfc/android/src/main/kotlin/com/exxili/capacitornfc/NFCPlugin.kt
    ```
 2. Busca la línea con `getParcelableExtra<Tag>`
 3. Aplica el reemplazo mostrado por el script
