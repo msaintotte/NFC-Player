@@ -4,7 +4,7 @@
 # Ejecutar desde la raiz del proyecto: powershell -ExecutionPolicy Bypass -File fix-nfc-android11.ps1
 # =============================================================================
 
-$pluginFile = "node_modules\@exxili\capacitor-nfc\android\src\main\java\com\exxili\capacitornfc\NFCPlugin.kt"
+$pluginFile = "node_modules\@exxili\capacitor-nfc\android\src\main\kotlin\com\exxili\capacitornfc\NFCPlugin.kt"
 
 # Verificar que el archivo existe
 if (-not (Test-Path $pluginFile)) {
